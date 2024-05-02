@@ -1,28 +1,8 @@
-import streamlit as st
-import pickle
-import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
 
-teams = ['Sunrisers Hyderabad',
-         'Mumbai Indians',
-         'Royal Challengers Bangalore',
-         'Kolkata Knight Riders',
-         'Kings XI Punjab',
-         'Chennai Super Kings',
-         'Rajasthan Royals',
-         'Delhi Capitals']
-
-cities = ['Hyderabad', 'Bangalore', 'Mumbai', 'Indore', 'Kolkata', 'Delhi',
-          'Chandigarh', 'Jaipur', 'Chennai', 'Cape Town', 'Port Elizabeth',
-          'Durban', 'Centurion', 'East London', 'Johannesburg', 'Kimberley',
-          'Bloemfontein', 'Ahmedabad', 'Cuttack', 'Nagpur', 'Dharamsala',
-          'Visakhapatnam', 'Pune', 'Raipur', 'Ranchi', 'Abu Dhabi',
-          'Sharjah', 'Mohali', 'Bengaluru']
-
-# Error handling around loading the pickle file
-try:
-    pipe = pickle.load(open('pipe.pkl', 'rb'))
-except FileNotFoundError:
-    st.error("Error: 'pipe.pkl' file not found. Make sure the file exists in the current directory.")
+# Load the OneHotEncoder if you've saved it along with the pipeline
+# For example:
+# enc = pickle.load(open('encoder.pkl','rb'))
 
 st.title('IPL Win Predictor')
 
@@ -53,15 +33,25 @@ if st.button('Predict Probability'):
     crr = score / overs
     rrr = (runs_left * 6) / balls_left
 
-    input_df = pd.DataFrame({'batting_team': [batting_team], 'bowling_team': [bowling_team], 'city': [selected_city],
-                             'runs_left': [runs_left], 'balls_left': [balls_left], 'wickets': [wickets],
-                             'total_runs_x': [target], 'crr': [crr], 'rrr': [rrr]})
+    # Preprocess categorical features
+    batting_team_encoded = enc.transform([[batting_team]]).toarray()
+    bowling_team_encoded = enc.transform([[bowling_team]]).toarray()
+    selected_city_encoded = enc.transform([[selected_city]]).toarray()
 
-    # st.table(input_df)
+    input_df = pd.DataFrame({
+        'batting_team': batting_team_encoded,
+        'bowling_team': bowling_team_encoded,
+        'city': selected_city_encoded,
+        'runs_left': [runs_left],
+        'balls_left': [balls_left],
+        'wickets': [wickets],
+        'total_runs_x': [target],
+        'crr': [crr],
+        'rrr': [rrr]
+    })
 
-    if 'pipe' in locals():
-        result = pipe.predict_proba(input_df)
-        loss = result[0][0]
-        win = result[0][1]
-        st.header(batting_team + "-" + str(round(win * 100)) + "%")
-        st.header(bowling_team + "-" + str(round(loss * 100)) + "%")
+    result = pipe.predict_proba(input_df)
+    loss = result[0][0]
+    win = result[0][1]
+    st.header(batting_team + "-" + str(round(win * 100)) + "%")
+    st.header(bowling_team + "-" + str(round(loss * 100)) + "%")
