@@ -2,4 +2,6 @@
  pandas
  numpy
 scikit-learn 
-
+pickle
+openpyxl
+matplotlib
