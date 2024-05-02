@@ -1,5 +1,5 @@
 from sklearn.preprocessing import OneHotEncoder
-
+import streamlit as st
 # Load the OneHotEncoder if you've saved it along with the pipeline
 # For example:
 # enc = pickle.load(open('encoder.pkl','rb'))
